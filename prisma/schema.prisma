@@ -13,3 +13,130 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Player {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(300)
+  age         Int
+  pace        Int
+  shooting    Int
+  passing     Int
+  dribbling   Int
+  defending   Int
+  physicality Int
+  diving      Int
+  handling    Int
+  kicking     Int
+  reflexes    Int
+  positioning Int
+  contracts   Contract[]
+  position    Position
+  history    Signing[]
+}
+
+enum Position {
+  GK
+  CB
+  LB
+  RB
+  CDM
+  CM
+  CAM
+  RM
+  LM
+  ST
+  RW
+  LW
+}
+
+model League {
+  id    Int    @id @default(autoincrement())
+  name  String @db.VarChar(300)
+  clubs Club[]
+  seasons Season[]
+}
+
+model Club {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(300)
+  league      League     @relation(fields: [leagueId], references: [id])
+  leagueId    Int
+  tactics     Tactic[]
+  contracts   Contract[]
+  homeMatches Match[]    @relation("homeTeam")
+  awayMatches Match[]    @relation("awayTeam")
+  incomings   Signing[]  @relation("toClub")
+  outgoings   Signing[]  @relation("fromClub")
+}
+
+model Contract {
+  id            Int       @id @default(autoincrement())
+  player        Player    @relation(fields: [playerId], references: [id])
+  playerId      Int
+  club          Club      @relation(fields: [clubId], references: [id])
+  clubId        Int
+  startDate     DateTime
+  endDate       DateTime
+  wage          Int
+  releaseClause Int?
+  signings      Signing[]
+}
+
+model Tactic {
+  id                 Int     @id @default(autoincrement())
+  club               Club    @relation(fields: [clubId], references: [id])
+  clubId             Int
+  formation          String  @db.VarChar(100)
+  active             Boolean
+  passing_directness Int
+  width              Int
+  tempo              Int
+  pressing           Int
+}
+
+model Match {
+  id         Int     @id @default(autoincrement())
+  homeTeam   Club    @relation(fields: [homeClubId], references: [id], name: "homeTeam")
+  awayTeam   Club    @relation(fields: [awayClubId], references: [id], name: "awayTeam")
+  homeClubId Int
+  awayClubId Int
+  season     Season  @relation(fields: [seasonId], references: [id])
+  seasonId   Int
+  result     Result?
+}
+
+model Result {
+  matchId        Int   @id @default(autoincrement())
+  match          Match @relation(fields: [matchId], references: [id])
+  homeGoals      Int
+  awayGoals      Int
+  homeShots      Int
+  awayShots      Int
+  homePossession Int
+  awayPossession Int
+  homeCorner     Int
+  awayCorners    Int
+}
+
+model Signing {
+  fromClubId   Int
+  toClubId     Int
+  playerId     Int
+  fromClub     Club     @relation(fields: [fromClubId], references: [id], name: "fromClub")
+  toClub       Club     @relation(fields: [toClubId], references: [id], name: "toClub")
+  player       Player   @relation(fields: [playerId], references: [id])
+  transferDate DateTime
+  transferFee  Int
+  contractId   Int
+  contract     Contract @relation(fields: [contractId], references: [id])
+
+  @@id([fromClubId, toClubId, playerId, transferDate])
+}
+
+model Season {
+  id      Int     @id @default(autoincrement())
+  year    String  @db.VarChar(300)
+  matches Match[]
+  league League @relation(fields: [leagueId], references: [id])
+  leagueId Int
+}
