@@ -8,6 +8,10 @@ services:
       POSTGRES_DB: football_manager
     ports:
       - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
     volumes:
       - football_manager_data:/var/lib/postgresql/data
 
