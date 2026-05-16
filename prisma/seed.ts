@@ -1,8 +1,7 @@
 // prisma/seed.ts
-import { PrismaClient } from "../src/generated/client.js";
+import { PrismaClient, Position, PassingDirectness, Width, Tempo, Pressing, DefensiveLine, FinalThirdApproach } from "../src/generated/client.js";
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
-import { Position } from "../src/generated/client.js";
 
 const { Pool } = pg
 const connectionString = `${process.env.DATABASE_URL}`
@@ -158,10 +157,51 @@ async function main() {
             });
         }
     }
+    await prisma.tactic.upsert({
+        where: {
+            clubId_active: {
+                clubId: manUtd.id,
+                active: true
+            },
+        },
+        update:{},
+        create: {
+            clubId: manUtd.id,
+            formation: "4-2-3-1",
+            active: true,
+            passingDirectness: PassingDirectness.SHORTER,
+            width: Width.NARROW,
+            tempo: Tempo.LOW,
+            pressing: Pressing.STANDARD,
+            defensiveLine: DefensiveLine.LOWER,
+            counter: false,
+            counterPress: false,
+            finalThirdApproach: FinalThirdApproach.WORKBALLINTOBOX
+        }
+    })
 
-
-
-
+    await prisma.tactic.upsert({
+        where: {
+            clubId_active: {
+                clubId: liverpool.id,
+                active: true
+            }
+        },
+        update: {},
+        create: {
+            clubId: liverpool.id,
+            formation: "4-3-3",
+            active: true,
+            passingDirectness: PassingDirectness.DIRECT,
+            width: Width.WIDE,
+            tempo: Tempo.HIGH,
+            pressing: Pressing.EXTREME,
+            defensiveLine: DefensiveLine.HIGHER,
+            counter: true,
+            counterPress: true,
+            finalThirdApproach: FinalThirdApproach.SHOOTONSIGHT
+        }
+    })
 }
 
 main()

@@ -15,7 +15,7 @@ datasource db {
 
 model Player {
   id          Int        @id @default(autoincrement())
-  name        String     @db.VarChar(300) @unique
+  name        String     @unique @db.VarChar(300)
   age         Int
   pace        Int
   shooting    Int
@@ -30,7 +30,7 @@ model Player {
   positioning Int
   contracts   Contract[]
   position    Position
-  history    Signing[]
+  history     Signing[]
 }
 
 enum Position {
@@ -49,25 +49,25 @@ enum Position {
 }
 
 model League {
-  id    Int    @id @default(autoincrement())
-  name  String @unique @db.VarChar(300)
-  clubs Club[]
+  id      Int      @id @default(autoincrement())
+  name    String   @unique @db.VarChar(300)
+  clubs   Club[]
   seasons Season[]
 }
 
 model Club {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique @db.VarChar(300)
-  league      League     @relation(fields: [leagueId], references: [id])
-  leagueId    Int
-  tactics     Tactic[]
-  contracts   Contract[]
-  homeMatches Match[]    @relation("homeTeam")
-  awayMatches Match[]    @relation("awayTeam")
-  incomings   Signing[]  @relation("toClub")
-  outgoings   Signing[]  @relation("fromClub")
+  id             Int        @id @default(autoincrement())
+  name           String     @unique @db.VarChar(300)
+  league         League     @relation(fields: [leagueId], references: [id])
+  leagueId       Int
+  tactics        Tactic[]
+  contracts      Contract[]
+  homeMatches    Match[]    @relation("homeTeam")
+  awayMatches    Match[]    @relation("awayTeam")
+  incomings      Signing[]  @relation("toClub")
+  outgoings      Signing[]  @relation("fromClub")
   transferBudget Int
-  wageBudget Int
+  wageBudget     Int
 }
 
 model Contract {
@@ -81,20 +81,64 @@ model Contract {
   wage          Int
   releaseClause Int?
   signings      Signing[]
-  
+
   @@unique([playerId, clubId, startDate])
 }
 
 model Tactic {
-  id                 Int     @id @default(autoincrement())
-  club               Club    @relation(fields: [clubId], references: [id])
+  id                 Int                @id @default(autoincrement())
+  club               Club               @relation(fields: [clubId], references: [id])
   clubId             Int
-  formation          String  @db.VarChar(100)
+  formation          String             @db.VarChar(100)
   active             Boolean
-  passing_directness Int
-  width              Int
-  tempo              Int
-  pressing           Int
+  passingDirectness  PassingDirectness
+  width              Width
+  tempo              Tempo
+  pressing           Pressing
+  defensiveLine      DefensiveLine
+  counter            Boolean
+  counterPress       Boolean
+  finalThirdApproach FinalThirdApproach
+
+  @@unique([clubId, active])
+}
+
+enum PassingDirectness {
+  SHORTER
+  STANDARD
+  DIRECT
+  ROUTEONE
+}
+
+enum Width {
+  NARROW
+  STANDARD
+  WIDE
+}
+
+enum Tempo {
+  LOW
+  STANDARD
+  HIGH
+}
+
+enum Pressing {
+  LOW
+  STANDARD
+  HIGH
+  EXTREME
+}
+
+enum DefensiveLine {
+  LOWER
+  STANDARD
+  HIGHER
+}
+
+enum FinalThirdApproach {
+  WORKBALLINTOBOX
+  STANDARD
+  SHOOTONSIGHT
 }
 
 model Match {
@@ -137,9 +181,9 @@ model Signing {
 }
 
 model Season {
-  id      Int     @id @default(autoincrement())
-  year    String  @db.VarChar(300)
-  matches Match[]
-  league League @relation(fields: [leagueId], references: [id])
+  id       Int     @id @default(autoincrement())
+  year     String  @db.VarChar(300)
+  matches  Match[]
+  league   League  @relation(fields: [leagueId], references: [id])
   leagueId Int
 }
