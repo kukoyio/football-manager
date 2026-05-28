@@ -7,7 +7,6 @@ type ClubWithDetails​ = {
     players : Player[];
 }
 
-
 type SimulationResult = {
     homeGoals: number;
     awayGoals: number;
@@ -39,6 +38,35 @@ type MatchState = {
     awayTactic: Tactic;
     interval: number;
     result:  SimulationResult;
+}
+
+enum EventType {
+    SHOT = 'SHOT',
+    GOAL = 'GOAL',
+    FOUL = 'FOUL',
+    CORNER = 'CORNER',
+    YELLOW_CARD = 'YELLOW_CARD',
+    RED_CARD = 'RED_CARD',
+    HALF_TIME = 'HALF_TIME',
+    FULL_TIME = 'FULL_TIME',
+    SUBSTITUTION = 'SUBSTITUTION',
+    OFFSIDE = 'OFFSIDE',
+    INJURY = 'INJURY',
+    PENALTY = 'PENALTY',
+    FREE_KICK = 'FREE_KICK',
+    BIG_CHANCE_MISSED = 'BIG_CHANCE_MISSED',
+    SAVE = 'SAVE',
+    HIT_POST = 'HIT_POST',
+    PENALTY_MISS = 'PENALTY_MISS',
+    OWN_GOAL = 'OWN_GOAL'
+}
+
+type MatchEvent = {
+    type: EventType;
+    minute: number;
+    team: 'HOME' | 'AWAY';
+    playerInvolved?: Player;
+    secondaryPlayer?: Player;
 }
 
 function initializeMatchState(homeClub: ClubWithDetails, awayClub: ClubWithDetails): MatchState {
@@ -215,5 +243,5 @@ function calculatePossession(homePlayers: PlayerMatchState[], awayPlayers: Playe
     return { homePossession, awayPossession };
 }
 
-export type { ClubWithDetails, SimulationResult, PlayerMatchState, MatchState };
-export { initializeMatchState };
+export type { ClubWithDetails, SimulationResult, PlayerMatchState, MatchState, EventType , MatchEvent };
+export { initializeMatchState, calculatePossession };
