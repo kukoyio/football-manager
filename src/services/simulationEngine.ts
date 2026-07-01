@@ -175,6 +175,13 @@ const FOUL_POSITION_WEIGHTS: Record<string, number> = {
     GK: 0.1
 };
 
+const FOULED_POSITION_WEIGHTS: Record<string, number> = {
+    LW: 1.5, RW: 1.5, CAM: 1.5, ST: 1.2, 
+    LM: 1.0, RM: 1.0, CM: 1.0,           
+    CDM: 0.5, LB: 0.5, RB: 0.5,          
+    CB: 0.2, GK: 0.05                    
+};
+
 const ATTACKING_EVENT_WEIGHTS: Record<string, number> = {
     SHOT: 130,
     CROSS: 180,
@@ -290,7 +297,6 @@ function generateNextEvent(matchState: MatchState): MatchEvent {
 
 
     const ATTACKING_EVENTS = new Set(['SHOT', 'CROSS', 'OFFSIDE']);
-    const DEFENSIVE_EVENTS = new Set(['FOUL']);
 
     const attackingTeam = Math.random() * 100 < homePossession ? 'HOME' : 'AWAY';
 
@@ -356,8 +362,8 @@ function resolveCross(matchState: MatchState, team: 'HOME' | 'AWAY'): MatchEvent
     const deliveryQuality = crosserFlankScore / (crosserFlankScore + defenderFlankScore); // Returns ~0.3 to ~0.7
 
     // 4. Box Duel: Incorporate Physicality Advantage
-    const targetAttacker = attackingPlayers.find(p => ['ST'].includes(p.player.position))?.player || crosser;
-    const centerBacks = defendingPlayers.filter(p => p.player.position === 'CB').map(p => p.player);
+    const targetAttacker = attackingPlayers.find(p => [Position.ST].includes(p.player.position))?.player || crosser;
+    const centerBacks = defendingPlayers.filter(p => p.player.position === Position.CB).map(p => p.player);
     
     const avgCbDefending = centerBacks.length > 0 
         ? centerBacks.reduce((sum, cb) => sum + cb.defending + cb.physicality, 0) / (centerBacks.length * 2)
@@ -390,8 +396,8 @@ function resolveCross(matchState: MatchState, team: 'HOME' | 'AWAY'): MatchEvent
         type: outcome === 'SAVE' ? EventType.SAVE : EventType.CORNER,
         minute: matchState.currentMinute,
         team,
-        playerInvolved: outcome === 'SAVE' ? crosser : crosser,
-        secondaryPlayer: outcome === 'SAVE' ? gk : opposingDefender
+        playerInvolved: outcome === 'SAVE' ? gk : crosser,
+        secondaryPlayer: outcome === 'SAVE' ? crosser : opposingDefender
     };
 
 }
@@ -482,12 +488,13 @@ function resolveShot(matchState: MatchState, team: 'HOME' | 'AWAY', assistCandid
         };
     } 
     else if (roll < saveCutoff) {
+        const savingTeam = team === 'HOME' ? 'AWAY' : 'HOME';
         return {
             type: EventType.SAVE,
             minute: matchState.currentMinute,
-            team,
-            playerInvolved: shooter,
-            secondaryPlayer: keeperState?.player
+            savingTeam,
+            playerInvolved: keeperState?.player,
+            secondaryPlayer: shooter
         };
     } 
     else {
@@ -506,6 +513,8 @@ function resolveFoul(matchState: MatchState, team: 'HOME' | 'AWAY'): MatchEvent 
     // Pick fouler (defending team, weighted toward CB/CDM/CM)
     const defendingPlayers = team === 'HOME' ? matchState.homePlayers : matchState.awayPlayers;
     const fouledTeam = team === 'HOME' ? 'AWAY' : 'HOME';
+    const attackingTeamPlayers = team === 'HOME' ? matchState.awayPlayers : matchState.homePlayers;
+
 
     const foulWeights: Record<string, number> = {};
     for (let i = 0; i < defendingPlayers.length; i++) {
@@ -522,11 +531,27 @@ function resolveFoul(matchState: MatchState, team: 'HOME' | 'AWAY'): MatchEvent 
     const foulerIndex = parseInt(weightedRandom(foulWeights), 10);
     const foulingPlayer = defendingPlayers[foulerIndex].player;
 
+    const targetWeights: Record<string, number> = {};
+    for(let i = 0; i < attackingTeamPlayers.length; i++) {
+        const player = attackingTeamPlayers[i].player;
+        const positionWeight = FOULED_POSITION_WEIGHTS[player.position] || 0.5;
+        
+        // Calculate the vulnerability factor
+        const foulMagnetScore = (player.dribbling * 1.5) + player.pace;
+        
+        // Multiply them together to get the final likelihood of this player being fouled
+        targetWeights[i.toString()] = positionWeight * foulMagnetScore;
+    }
+
+    const fouledIndex = parseInt(weightedRandom(targetWeights), 10);
+    const fouledPlayer = attackingTeamPlayers[fouledIndex].player;
+
     return {
-        type: 'FOUL',
+        type: EventType.FOUL,
         minute: matchState.currentMinute,
         team: fouledTeam, // The team that *won* the foul
-        playerInvolved: foulingPlayer
+        playerInvolved: foulingPlayer,
+        secondaryPlayer: fouledPlayer
     };
 }
 
