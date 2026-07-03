@@ -3,6 +3,7 @@ import type { Player, Tactic } from "../generated/client.js";
 
 type ClubWithDetails = {
     id: number;
+    name: string;
     tactic: Tactic;
     players : Player[];
 }
@@ -14,7 +15,7 @@ type SimulationResult = {
     awayShots: number;
     homePossession: number;
     awayPossession: number;
-    homeCorner: number;
+    homeCorners: number;
     awayCorners: number;
 
 }
@@ -126,7 +127,7 @@ function initializeMatchState(homeClub: ClubWithDetails, awayClub: ClubWithDetai
             awayShots: 0,
             homePossession: 50,
             awayPossession: 50,
-            homeCorner: 0,
+            homeCorners: 0,
             awayCorners: 0
         },
         currentMinute: 0
